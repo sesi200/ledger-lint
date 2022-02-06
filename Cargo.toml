@@ -1,0 +1,16 @@
+[package]
+name = "ledger-lint"
+version = "0.1.0"
+edition = "2021"
+authors = ["Severin Siffert <severin@siffert.org>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = "0.4.0"
+clap = { version = "3.0.7", features = ["derive"] }
+regex = "1"
+
+[lib]
+name = "ledgerlint"
+path = "src/lib.rs"
