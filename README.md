@@ -13,3 +13,6 @@ Complains when an `Income` or `Expense` posting has a) no payee declaration for 
 
 # Building
 `cargo build`
+
+## Code styling
+Please apply `cargo fmt` and clean up other things with `cargo clippy --all-targets --all-features`

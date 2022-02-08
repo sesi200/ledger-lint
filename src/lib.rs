@@ -1,7 +1,7 @@
 pub mod state {
     use chrono::NaiveDate;
 
-    #[derive(Debug)]
+    #[derive(Debug, Default)]
     pub struct State {
         pub line_number: usize,
         pub declarations_done: bool,
@@ -15,13 +15,12 @@ pub mod state {
     }
 
     impl TransactionState {
-        pub fn new( date: NaiveDate) -> Self {
-            Self {date, contains_payee: false,}
+        pub fn new(date: NaiveDate) -> Self {
+            Self {
+                date,
+                contains_payee: false,
+            }
         }
-    }
-
-    impl Default for State {
-        fn default() -> Self { Self {line_number: 0, declarations_done: false, transaction: None}}
     }
 }
 
