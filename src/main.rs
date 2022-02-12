@@ -3,12 +3,13 @@ use regex::Regex;
 use std::fs::File;
 use std::io;
 use std::io::{BufRead, BufReader};
+use clap::Parser;
 
-use ledgerlint::cli;
-use ledgerlint::state;
+use util::args;
+use util::state;
 
 fn main() -> io::Result<()> {
-    let args = cli::Args::parse_cli();
+    let args = args::Args::parse();
 
     let file = File::open(&args.infile);
     let mut reader = file.map(BufReader::new)?;
