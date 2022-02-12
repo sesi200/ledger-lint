@@ -4,7 +4,7 @@ use clap::IntoApp;
 use std::env;
 use std::io::Error;
 
-include!("src/util/args.rs");
+include!("src/command/args.rs");
 
 fn main() -> Result<(), Error> {
     let outdir = match env::var_os("OUT_DIR") {
