@@ -1,11 +1,14 @@
 use std::io;
-use args::Command;
 
-pub mod args;
-pub mod check;
+mod check;
 
 pub fn exec(file: &str, cmd: &Command) -> io::Result<()> {
     match cmd {
-        Command::Check => {check::exec(file)}
+        Command::Check(opt) => {check::exec(file, opt)}
     }
+}
+
+#[derive(clap::Subcommand, Debug)]
+pub enum Command {
+    Check(check::CheckOpts),
 }
