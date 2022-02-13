@@ -1,5 +1,5 @@
-use std::io;
 use clap::Parser;
+use std::io;
 
 mod command;
 mod util;
@@ -8,7 +8,6 @@ mod util;
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
-
     /// Path to input file
     pub infile: String,
 
