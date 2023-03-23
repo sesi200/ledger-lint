@@ -1,3 +1,4 @@
+pub mod date;
 pub mod header;
 pub mod posting;
 pub mod transaction;
@@ -5,7 +6,7 @@ pub mod transaction;
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::{complete::alpha1, streaming::space0},
+    character::{complete::alphanumeric1, streaming::space0},
     combinator::peek,
     error::{context, VerboseError},
     sequence::tuple,
@@ -15,7 +16,8 @@ use nom::{
 pub type Res<T, U> = IResult<T, U, VerboseError<T>>;
 
 pub fn starts_with_content(input: &str) -> Res<&str, ()> {
-    context("Starts with something", peek(alpha1))(input).map(|(next_input, _)| (next_input, ()))
+    context("Starts with something", peek(alphanumeric1))(input)
+        .map(|(next_input, _)| (next_input, ()))
 }
 
 #[test]

@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::io;
+use std::{io, path::PathBuf};
 
 mod command;
 mod util;
@@ -9,7 +9,7 @@ mod util;
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
     /// Path to input file
-    pub infile: String,
+    pub infile: PathBuf,
 
     ///Command to use
     #[clap(subcommand)]

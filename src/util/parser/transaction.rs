@@ -19,12 +19,18 @@ pub fn transaction(input: &str) -> Res<&str, Transaction> {
 
 #[test]
 fn valid_transaction() {
+    use chrono::NaiveDate;
+    let d = NaiveDate::parse_from_str("2003/04/15", "%Y/%m/%d").unwrap();
+
     assert_eq!(
-        transaction("Header\n  Posting1\n  Posting2\n"),
+        transaction("2003/04/15 Header\n  Posting1\n  Posting2\n"),
         Ok((
             "",
             Transaction {
-                header: Header { line: "Header" },
+                header: Header {
+                    date: d.clone(),
+                    description: "Header"
+                },
                 postings: vec![Posting { line: "Posting1" }, Posting { line: "Posting2" }]
             }
         ))
@@ -35,7 +41,7 @@ fn valid_transaction() {
 fn bad_indentation() {
     use nom::combinator::all_consuming;
 
-    assert!(transaction("  Header\n  Posting1\n  Posting2\n").is_err());
-    assert!(transaction("Header\nPosting1\n  Posting2\n").is_err());
-    assert!(all_consuming(transaction)("Header\n  Posting1\nPosting2\n").is_err());
+    assert!(transaction("  2003/04/15 Header\n  Posting1\n  Posting2\n").is_err());
+    assert!(transaction("2003/04/15 Header\nPosting1\n  Posting2\n").is_err());
+    assert!(all_consuming(transaction)("2003/04/15 Header\n  Posting1\nPosting2\n").is_err());
 }

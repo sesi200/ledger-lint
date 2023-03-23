@@ -1,28 +1,53 @@
+use super::{date::date, starts_with_content, Res};
+use chrono::NaiveDate;
 use nom::{
-    character::complete::{line_ending, not_line_ending},
+    character::complete::{line_ending, not_line_ending, space1},
     error::context,
-    sequence::delimited,
+    sequence::{delimited, tuple},
 };
-
-use super::{starts_with_content, Res};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Header<'a> {
-    pub line: &'a str,
+    pub date: NaiveDate,
+    pub description: &'a str,
 }
 
 pub fn header(input: &str) -> Res<&str, Header> {
     context(
         "Transaction Header",
-        delimited(starts_with_content, not_line_ending, line_ending),
+        delimited(
+            starts_with_content,
+            tuple((date, space1, not_line_ending)),
+            line_ending,
+        ),
     )(input)
-    .map(|(next_input, line)| (next_input, Header { line }))
+    .map(|(next_input, (date, _, description))| (next_input, Header { date, description }))
 }
 
 #[test]
 fn valid_header() {
-    assert_eq!(header("arst\n"), Ok(("", Header { line: "arst" })));
-    assert_eq!(header("arst\r\n"), Ok(("", Header { line: "arst" })));
+    let d = NaiveDate::parse_from_str("2003/04/15", "%Y/%m/%d").unwrap();
+
+    assert_eq!(
+        header("2003/04/15 description\n"),
+        Ok((
+            "",
+            Header {
+                date: d.clone(),
+                description: "description"
+            }
+        ))
+    );
+    assert_eq!(
+        header("2003/4/15 description\r\n"),
+        Ok((
+            "",
+            Header {
+                date: d.clone(),
+                description: "description"
+            }
+        ))
+    );
 }
 
 #[test]
@@ -30,4 +55,5 @@ fn invalid_header() {
     assert!(header(" arst\n").is_err());
     assert!(header("\tarst\n").is_err());
     assert!(header("   \tarst\n").is_err());
+    assert!(header("2003/4/ asrtn\n").is_err());
 }
