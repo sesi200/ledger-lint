@@ -1,7 +1,7 @@
 use nom::{
     character::complete::{line_ending, not_line_ending},
     error::context,
-    sequence::tuple,
+    sequence::delimited,
 };
 
 use super::{starts_with_content, Res};
@@ -14,9 +14,9 @@ pub struct Header<'a> {
 pub fn header(input: &str) -> Res<&str, Header> {
     context(
         "Transaction Header",
-        tuple((starts_with_content, not_line_ending, line_ending)),
+        delimited(starts_with_content, not_line_ending, line_ending),
     )(input)
-    .map(|(next_input, (_, res, _))| (next_input, Header { line: res }))
+    .map(|(next_input, line)| (next_input, Header { line }))
 }
 
 #[test]

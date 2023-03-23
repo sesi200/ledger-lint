@@ -1,10 +1,10 @@
 use nom::{
-    character::complete::{line_ending, not_line_ending, space1},
+    character::complete::{line_ending, not_line_ending},
     error::context,
-    sequence::tuple,
+    sequence::delimited,
 };
 
-use super::Res;
+use super::{indented, Res};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Posting<'a> {
@@ -12,8 +12,8 @@ pub struct Posting<'a> {
 }
 
 pub fn posting(input: &str) -> Res<&str, Posting> {
-    context("Posting", tuple((space1, not_line_ending, line_ending)))(input)
-        .map(|(next_input, (_, posting, _))| (next_input, Posting { line: posting }))
+    context("Posting", delimited(indented, not_line_ending, line_ending))(input)
+        .map(|(next_input, posting)| (next_input, Posting { line: posting }))
 }
 
 #[test]
