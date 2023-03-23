@@ -8,9 +8,9 @@ rust-version = "1.58.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.0"
-clap = { version = "3.0.7", features = ["derive"] }
-regex = "1"
+chrono = "0.4.24"
+clap = { version = "4.1.11", features = ["derive"] }
+regex = "1.7.2"
 
 [[bin]]
 name = "ledgerlint"
