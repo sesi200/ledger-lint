@@ -32,14 +32,14 @@ pub fn transaction(input: &str) -> Res<Transaction> {
 #[test]
 fn valid_transaction() {
     use chrono::NaiveDate;
-    let d = NaiveDate::parse_from_str("2003/04/15", "%Y/%m/%d").unwrap();
+    let date = NaiveDate::parse_from_str("2003/04/15", "%Y/%m/%d").unwrap();
 
     assert_eq!(
         transaction("2003/04/15 Header\n  Posting1  value1\n\tPosting2\tvalue2\n"),
         Ok((
             "",
             Transaction {
-                date: d.clone(),
+                date,
                 description: "Header",
                 postings: vec![
                     Posting {

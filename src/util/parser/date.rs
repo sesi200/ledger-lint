@@ -18,9 +18,7 @@ pub fn date(input: &str) -> Res<NaiveDate> {
         let result = NaiveDate::parse_from_str(date_str, "%Y/%m/%d").map_err(|err| {
             println!(
                 "failed to parse {}, error is {}, leftover is {}",
-                date_str,
-                err.to_string(),
-                next_input
+                date_str, err, next_input
             );
             VerboseError {
                 errors: vec![(

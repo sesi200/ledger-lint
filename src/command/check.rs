@@ -84,7 +84,7 @@ impl TransactionState {
 }
 
 pub fn exec(file: &Path, opts: &CheckOpts) -> Result<()> {
-    let file_content = std::fs::read_to_string(&file)?;
+    let file_content = std::fs::read_to_string(file)?;
     let findings = analyze(&file_content, opts);
 
     for finding in findings {

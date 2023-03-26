@@ -26,11 +26,11 @@ fn valid_header() {
 
     assert_eq!(
         header("2003/04/15 description\n"),
-        Ok(("", (d.clone(), "description")))
+        Ok(("", (d, "description")))
     );
     assert_eq!(
         header("2003/4/15 description\r\n"),
-        Ok(("", (d.clone(), "description")))
+        Ok(("", (d, "description")))
     );
 }
 
