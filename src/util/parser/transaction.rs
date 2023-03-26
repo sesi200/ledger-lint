@@ -60,7 +60,10 @@ fn valid_transaction() {
 fn bad_indentation() {
     use nom::combinator::all_consuming;
 
-    assert!(transaction("  2003/04/15 Header\n  Posting1\n  Posting2\n").is_err());
-    assert!(transaction("2003/04/15 Header\nPosting1\n  Posting2\n").is_err());
-    assert!(all_consuming(transaction)("2003/04/15 Header\n  Posting1\nPosting2\n").is_err());
+    assert!(transaction("  2003/04/15 Header\n  Posting1  value1\n  Posting2  value2\n").is_err());
+    assert!(transaction("2003/04/15 Header\nPosting1  value1\n  Posting2  value2\n").is_err());
+    assert!(all_consuming(transaction)(
+        "2003/04/15 Header\n  Posting1  value1\nPosting2  value2\n"
+    )
+    .is_err());
 }

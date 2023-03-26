@@ -1,4 +1,5 @@
 pub mod account;
+pub mod account_declaration;
 pub mod date;
 pub mod header;
 pub mod identifier;
