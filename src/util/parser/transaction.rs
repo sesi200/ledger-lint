@@ -1,20 +1,32 @@
+use chrono::NaiveDate;
 use nom::{error::context, multi::many1, sequence::tuple};
 
 use super::{
-    header::{header, Header},
+    header::header,
     posting::{posting, Posting},
     Res,
 };
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Transaction<'a> {
-    pub header: Header<'a>,
+    pub date: NaiveDate,
+    pub description: &'a str,
     pub postings: Vec<Posting<'a>>,
 }
 
-pub fn transaction(input: &str) -> Res<&str, Transaction> {
-    context("Transaction", tuple((header, many1(posting))))(input)
-        .map(|(next_input, (header, postings))| (next_input, Transaction { header, postings }))
+pub fn transaction(input: &str) -> Res<Transaction> {
+    context("Transaction", tuple((header, many1(posting))))(input).map(
+        |(next_input, ((date, description), postings))| {
+            (
+                next_input,
+                Transaction {
+                    date,
+                    description,
+                    postings,
+                },
+            )
+        },
+    )
 }
 
 #[test]
@@ -27,10 +39,8 @@ fn valid_transaction() {
         Ok((
             "",
             Transaction {
-                header: Header {
-                    date: d.clone(),
-                    description: "Header"
-                },
+                date: d.clone(),
+                description: "Header",
                 postings: vec![Posting { line: "Posting1" }, Posting { line: "Posting2" }]
             }
         ))

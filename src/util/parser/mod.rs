@@ -13,9 +13,9 @@ use nom::{
     IResult,
 };
 
-pub type Res<T, U> = IResult<T, U, VerboseError<T>>;
+pub type Res<'a, U> = IResult<&'a str, U, VerboseError<&'a str>>;
 
-pub fn starts_with_content(input: &str) -> Res<&str, ()> {
+pub fn starts_with_content(input: &str) -> Res<()> {
     context("Starts with something", peek(alphanumeric1))(input)
         .map(|(next_input, _)| (next_input, ()))
 }
@@ -29,7 +29,7 @@ fn starts_with_content_test() {
 }
 
 /// Start with '\t' or 2+ spaces
-pub fn indented(input: &str) -> Res<&str, ()> {
+pub fn indented(input: &str) -> Res<()> {
     context("Indentation", tuple((alt((tag("\t"), tag("  "))), space0)))(input)
         .map(|(next_input, _)| (next_input, ()))
 }

@@ -11,7 +11,7 @@ pub struct Posting<'a> {
     pub line: &'a str,
 }
 
-pub fn posting(input: &str) -> Res<&str, Posting> {
+pub fn posting(input: &str) -> Res<Posting> {
     context("Posting", delimited(indented, not_line_ending, line_ending))(input)
         .map(|(next_input, posting)| (next_input, Posting { line: posting }))
 }

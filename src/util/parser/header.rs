@@ -6,13 +6,9 @@ use nom::{
     sequence::{delimited, tuple},
 };
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct Header<'a> {
-    pub date: NaiveDate,
-    pub description: &'a str,
-}
+pub type Header<'a> = (NaiveDate, &'a str);
 
-pub fn header(input: &str) -> Res<&str, Header> {
+pub fn header(input: &str) -> Res<Header> {
     context(
         "Transaction Header",
         delimited(
@@ -21,7 +17,7 @@ pub fn header(input: &str) -> Res<&str, Header> {
             line_ending,
         ),
     )(input)
-    .map(|(next_input, (date, _, description))| (next_input, Header { date, description }))
+    .map(|(next_input, (date, _, description))| (next_input, (date, description)))
 }
 
 #[test]
@@ -30,23 +26,11 @@ fn valid_header() {
 
     assert_eq!(
         header("2003/04/15 description\n"),
-        Ok((
-            "",
-            Header {
-                date: d.clone(),
-                description: "description"
-            }
-        ))
+        Ok(("", (d.clone(), "description")))
     );
     assert_eq!(
         header("2003/4/15 description\r\n"),
-        Ok((
-            "",
-            Header {
-                date: d.clone(),
-                description: "description"
-            }
-        ))
+        Ok(("", (d.clone(), "description")))
     );
 }
 

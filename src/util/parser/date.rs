@@ -9,7 +9,7 @@ use nom::{
 
 use super::Res;
 
-pub fn date(input: &str) -> Res<&str, NaiveDate> {
+pub fn date(input: &str) -> Res<NaiveDate> {
     context(
         "Date",
         recognize(tuple((digit1, tag("/"), digit1, tag("/"), digit1))),
