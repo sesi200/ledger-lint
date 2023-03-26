@@ -7,7 +7,7 @@ use super::{
 
 pub type Account<'a> = Vec<Identifier<'a>>;
 
-fn account(input: &str) -> Res<Account> {
+pub fn account(input: &str) -> Res<Account> {
     context("Account", separated_list1(tag(":"), identifier))(input)
         .map(|(next_input, identifier)| (next_input, identifier))
 }

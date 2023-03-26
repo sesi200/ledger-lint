@@ -35,13 +35,22 @@ fn valid_transaction() {
     let d = NaiveDate::parse_from_str("2003/04/15", "%Y/%m/%d").unwrap();
 
     assert_eq!(
-        transaction("2003/04/15 Header\n  Posting1\n  Posting2\n"),
+        transaction("2003/04/15 Header\n  Posting1  value1\n\tPosting2\tvalue2\n"),
         Ok((
             "",
             Transaction {
                 date: d.clone(),
                 description: "Header",
-                postings: vec![Posting { line: "Posting1" }, Posting { line: "Posting2" }]
+                postings: vec![
+                    Posting {
+                        account: vec!["Posting1"],
+                        value_expression: "value1"
+                    },
+                    Posting {
+                        account: vec!["Posting2"],
+                        value_expression: "value2"
+                    }
+                ]
             }
         ))
     );
