@@ -1,9 +1,11 @@
 use chrono::NaiveDate;
 use nom::{error::context, multi::many1, sequence::tuple};
 
+use crate::util::parser::posting::PostingType;
+
 use super::{
-    header::header,
     posting::{posting, Posting},
+    transaction_header::transaction_header,
     Res,
 };
 
@@ -15,7 +17,7 @@ pub struct Transaction<'a> {
 }
 
 pub fn transaction(input: &str) -> Res<Transaction> {
-    context("Transaction", tuple((header, many1(posting))))(input).map(
+    context("Transaction", tuple((transaction_header, many1(posting))))(input).map(
         |(next_input, ((date, description), postings))| {
             (
                 next_input,
@@ -44,11 +46,13 @@ fn valid_transaction() {
                 postings: vec![
                     Posting {
                         account: vec!["Posting1"],
-                        value_expression: "value1"
+                        value_expression: "value1",
+                        posting_type: PostingType::Actual
                     },
                     Posting {
                         account: vec!["Posting2"],
-                        value_expression: "value2"
+                        value_expression: "value2",
+                        posting_type: PostingType::Actual
                     }
                 ]
             }

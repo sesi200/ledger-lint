@@ -17,7 +17,15 @@ pub fn identifier(input: &str) -> Res<Identifier> {
         "Identifier",
         many_till(
             take(1_u8),
-            alt((line_ending, tag("\t"), tag(":"), tag("  "), eof)),
+            alt((
+                tag("\t"),
+                tag(":"),
+                tag("  "),
+                tag(")"),
+                tag("]"),
+                line_ending,
+                eof,
+            )),
         ),
     )(input)?;
 

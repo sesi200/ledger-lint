@@ -1,6 +1,9 @@
 use nom::{
+    branch::alt,
+    bytes::complete::tag,
     character::complete::{line_ending, not_line_ending},
-    error::context,
+    combinator::{eof, opt},
+    error::{context, VerboseError, VerboseErrorKind},
     sequence::{delimited, tuple},
 };
 
@@ -10,9 +13,17 @@ use super::{
 };
 
 #[derive(Debug, PartialEq, Eq)]
+pub enum PostingType {
+    Actual,
+    Virtual,
+    VirtualBalanced,
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub struct Posting<'a> {
     pub account: Account<'a>,
     pub value_expression: &'a str,
+    pub posting_type: PostingType,
 }
 
 pub fn posting(input: &str) -> Res<Posting> {
@@ -20,19 +31,44 @@ pub fn posting(input: &str) -> Res<Posting> {
         "Posting",
         delimited(
             indented,
-            tuple((account, indented, not_line_ending)),
-            line_ending,
+            tuple((
+                opt(alt((tag("("), tag("[")))),
+                account,
+                opt(alt((tag(")"), tag("]")))),
+                indented,
+                not_line_ending,
+            )),
+            alt((line_ending, eof)),
         ),
     )(input)
-    .map(|(next_input, (account, _, value_expression))| {
-        (
-            next_input,
-            Posting {
-                account,
-                value_expression,
-            },
-        )
-    })
+    .map(
+        |(next_input, (delim_a, account, delim_b, _, value_expression))| {
+            let posting_type = if let (Some(a), Some(b)) = (delim_a, delim_b) {
+                match (a, b) {
+                    ("(", ")") => Ok(PostingType::Virtual),
+                    ("[", "]") => Ok(PostingType::VirtualBalanced),
+                    _ => Err(nom::Err::Error(VerboseError {
+                        errors: vec![(
+                            "Invalid virtual account indicators",
+                            VerboseErrorKind::Context("Posting"),
+                        )],
+                    })),
+                }
+            } else {
+                Ok(PostingType::Actual)
+            };
+            let posting_type = posting_type?;
+
+            Ok((
+                next_input,
+                Posting {
+                    account,
+                    value_expression,
+                    posting_type,
+                },
+            ))
+        },
+    )?
 }
 
 #[test]
@@ -43,7 +79,8 @@ fn space_indented() {
             "",
             Posting {
                 account: vec!["account"],
-                value_expression: "value"
+                value_expression: "value",
+                posting_type: PostingType::Actual
             }
         ))
     );
@@ -53,7 +90,8 @@ fn space_indented() {
             "",
             Posting {
                 account: vec!["account", "two"],
-                value_expression: "value"
+                value_expression: "value",
+                posting_type: PostingType::Actual
             }
         ))
     );
@@ -67,7 +105,8 @@ fn tab_indented() {
             "",
             Posting {
                 account: vec!["account"],
-                value_expression: "value"
+                value_expression: "value",
+                posting_type: PostingType::Actual
             }
         ))
     );
@@ -77,7 +116,8 @@ fn tab_indented() {
             "",
             Posting {
                 account: vec!["account", "two"],
-                value_expression: "value"
+                value_expression: "value",
+                posting_type: PostingType::Actual
             }
         ))
     );
@@ -91,7 +131,8 @@ fn mix_indented() {
             "",
             Posting {
                 account: vec!["account"],
-                value_expression: "value string"
+                value_expression: "value string",
+                posting_type: PostingType::Actual
             }
         ))
     );
@@ -100,4 +141,39 @@ fn mix_indented() {
 #[test]
 fn not_indented() {
     assert!(posting("arst\n").is_err());
+}
+
+#[test]
+fn virtual_posting() {
+    assert_eq!(
+        posting("    (account)    value\n"),
+        Ok((
+            "",
+            Posting {
+                account: vec!["account"],
+                value_expression: "value",
+                posting_type: PostingType::Virtual
+            }
+        ))
+    );
+}
+
+#[test]
+fn virtual_balanced() {
+    assert_eq!(
+        posting("    [account]    value\n"),
+        Ok((
+            "",
+            Posting {
+                account: vec!["account"],
+                value_expression: "value",
+                posting_type: PostingType::VirtualBalanced
+            }
+        ))
+    );
+}
+
+#[test]
+fn mixed_virtual_type() {
+    assert!(posting("    [account)    value\n").is_err());
 }

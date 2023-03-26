@@ -1,10 +1,10 @@
 pub mod account;
 pub mod account_declaration;
 pub mod date;
-pub mod header;
 pub mod identifier;
 pub mod posting;
 pub mod transaction;
+pub mod transaction_header;
 
 use nom::{
     branch::alt,
