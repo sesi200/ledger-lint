@@ -10,7 +10,7 @@ use nom::{
 use super::Res;
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct Commodity<'a>(&'a str);
+pub struct Commodity<'a>(pub &'a str);
 
 impl<'a> AsRef<str> for Commodity<'a> {
     fn as_ref(&self) -> &str {

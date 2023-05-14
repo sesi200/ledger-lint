@@ -1,6 +1,7 @@
 pub mod account;
 pub mod account_declaration;
 pub mod commodity;
+pub mod commodity_declaration;
 pub mod date;
 pub mod identifier;
 pub mod posting;

@@ -9,23 +9,23 @@ use nom::{
 };
 
 use super::{
-    account::{account, Account},
+    commodity::{commodity, Commodity},
     indented, Res,
 };
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct AccountDeclaration<'a> {
-    account: Account<'a>,
+pub struct CommodityDeclaration<'a> {
+    commodity: Commodity<'a>,
     extras: Vec<&'a str>,
 }
 
-pub fn account_declaration(input: &str) -> Res<AccountDeclaration> {
+pub fn commodity_declaration(input: &str) -> Res<CommodityDeclaration> {
     context(
-        "Account Declaration",
+        "Commodity Declaration",
         tuple((
             delimited(
-                tuple((tag("account"), space1)),
-                account,
+                tuple((tag("commodity"), space1)),
+                commodity,
                 tuple((space0, alt((line_ending, eof)))),
             ),
             many0(delimited(
@@ -35,17 +35,19 @@ pub fn account_declaration(input: &str) -> Res<AccountDeclaration> {
             )),
         )),
     )(input)
-    .map(|(next_input, (account, extras))| (next_input, AccountDeclaration { account, extras }))
+    .map(|(next_input, (commodity, extras))| {
+        (next_input, CommodityDeclaration { commodity, extras })
+    })
 }
 
 #[test]
 fn normal_declaration() {
     assert_eq!(
-        account_declaration("account my:long:account\n  extra 1\n  extra 2"),
+        commodity_declaration("commodity myCommodity\n  extra 1\n  extra 2"),
         Ok((
             "",
-            AccountDeclaration {
-                account: Account("my:long:account"),
+            CommodityDeclaration {
+                commodity: Commodity("myCommodity"),
                 extras: vec!["extra 1", "extra 2"]
             }
         ))
