@@ -5,6 +5,7 @@ pub mod commodity_declaration;
 pub mod date;
 pub mod identifier;
 pub mod posting;
+pub mod tag;
 pub mod transaction;
 pub mod transaction_header;
 
