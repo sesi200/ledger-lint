@@ -10,10 +10,17 @@ use nom::{
 
 use super::Res;
 
-pub type Identifier<'a> = &'a str;
+#[derive(Debug, PartialEq, Eq)]
+pub struct Identifier<'a>(&'a str);
+
+impl<'a> AsRef<str> for Identifier<'a> {
+    fn as_ref(&self) -> &str {
+        self.0
+    }
+}
 
 pub fn identifier(input: &str) -> Res<Identifier> {
-    let (_, (attempt, _)) = context(
+    let (leftover, (_, delimiter)) = context(
         "Identifier",
         many_till(
             take(1_u8),
@@ -29,8 +36,9 @@ pub fn identifier(input: &str) -> Res<Identifier> {
         ),
     )(input)?;
 
-    let total_characters = attempt.len();
-    if total_characters == 0 {
+    let identifier_len = input.len() - leftover.len() - delimiter.len();
+
+    if identifier_len == 0 {
         Err(nom::Err::Error(VerboseError {
             errors: vec![(
                 "Zero-length identifier found. Identifier needs to be at least 1 character.",
@@ -38,29 +46,29 @@ pub fn identifier(input: &str) -> Res<Identifier> {
             )],
         }))
     } else {
-        context("Identifier", take(total_characters))(input)
-            .map(|(next_input, identifier)| (next_input, identifier))
+        let (identifier, leftover) = input.split_at(identifier_len);
+        Ok((leftover, Identifier(identifier)))
     }
 }
 
 #[test]
 fn without_space() {
-    assert_eq!(identifier("arst  "), Ok(("  ", "arst")));
-    assert_eq!(identifier("arst\t"), Ok(("\t", "arst")));
-    assert_eq!(identifier("arst\r\n"), Ok(("\r\n", "arst")));
-    assert_eq!(identifier("arst\n"), Ok(("\n", "arst")));
-    assert_eq!(identifier("arst:"), Ok((":", "arst")));
-    assert_eq!(identifier("arst"), Ok(("", "arst")));
+    assert_eq!(identifier("arst  "), Ok(("  ", Identifier("arst"))));
+    assert_eq!(identifier("arst\t"), Ok(("\t", Identifier("arst"))));
+    assert_eq!(identifier("arst\r\n"), Ok(("\r\n", Identifier("arst"))));
+    assert_eq!(identifier("arst\n"), Ok(("\n", Identifier("arst"))));
+    assert_eq!(identifier("arst:"), Ok((":", Identifier("arst"))));
+    assert_eq!(identifier("arst"), Ok(("", Identifier("arst"))));
 }
 
 #[test]
 fn with_space() {
-    assert_eq!(identifier("ar st  "), Ok(("  ", "ar st")));
-    assert_eq!(identifier("ar st\t"), Ok(("\t", "ar st")));
-    assert_eq!(identifier("ar st\r\n"), Ok(("\r\n", "ar st")));
-    assert_eq!(identifier("ar st\n"), Ok(("\n", "ar st")));
-    assert_eq!(identifier("ar st:"), Ok((":", "ar st")));
-    assert_eq!(identifier("ar st"), Ok(("", "ar st")));
+    assert_eq!(identifier("ar st  "), Ok(("  ", Identifier("ar st"))));
+    assert_eq!(identifier("ar st\t"), Ok(("\t", Identifier("ar st"))));
+    assert_eq!(identifier("ar st\r\n"), Ok(("\r\n", Identifier("ar st"))));
+    assert_eq!(identifier("ar st\n"), Ok(("\n", Identifier("ar st"))));
+    assert_eq!(identifier("ar st:"), Ok((":", Identifier("ar st"))));
+    assert_eq!(identifier("ar st"), Ok(("", Identifier("ar st"))));
 }
 
 #[test]

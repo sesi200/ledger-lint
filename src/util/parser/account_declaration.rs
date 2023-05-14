@@ -45,7 +45,7 @@ fn normal_declaration() {
         Ok((
             "",
             AccountDeclaration {
-                account: vec!["my", "long", "account"],
+                account: Account("my:long:account"),
                 extras: vec!["extra 1", "extra 2"]
             }
         ))

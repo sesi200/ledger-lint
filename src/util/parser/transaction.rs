@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use nom::{error::context, multi::many1, sequence::tuple};
 
-use crate::util::parser::posting::PostingType;
+use crate::util::parser::account::Account;
 
 use super::{
     posting::{posting, Posting},
@@ -33,6 +33,7 @@ pub fn transaction(input: &str) -> Res<Transaction> {
 
 #[test]
 fn valid_transaction() {
+    use crate::util::parser::posting::PostingType;
     use chrono::NaiveDate;
     let date = NaiveDate::parse_from_str("2003/04/15", "%Y/%m/%d").unwrap();
 
@@ -45,12 +46,12 @@ fn valid_transaction() {
                 description: "Header",
                 postings: vec![
                     Posting {
-                        account: vec!["Posting1"],
+                        account: Account("Posting1"),
                         value_expression: "value1",
                         posting_type: PostingType::Actual
                     },
                     Posting {
-                        account: vec!["Posting2"],
+                        account: Account("Posting2"),
                         value_expression: "value2",
                         posting_type: PostingType::Actual
                     }

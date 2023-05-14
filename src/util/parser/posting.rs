@@ -78,7 +78,7 @@ fn space_indented() {
         Ok((
             "",
             Posting {
-                account: vec!["account"],
+                account: Account("account"),
                 value_expression: "value",
                 posting_type: PostingType::Actual
             }
@@ -89,7 +89,7 @@ fn space_indented() {
         Ok((
             "",
             Posting {
-                account: vec!["account", "two"],
+                account: Account("account:two"),
                 value_expression: "value",
                 posting_type: PostingType::Actual
             }
@@ -104,7 +104,7 @@ fn tab_indented() {
         Ok((
             "",
             Posting {
-                account: vec!["account"],
+                account: Account("account"),
                 value_expression: "value",
                 posting_type: PostingType::Actual
             }
@@ -115,7 +115,7 @@ fn tab_indented() {
         Ok((
             "",
             Posting {
-                account: vec!["account", "two"],
+                account: Account("account:two"),
                 value_expression: "value",
                 posting_type: PostingType::Actual
             }
@@ -130,7 +130,7 @@ fn mix_indented() {
         Ok((
             "",
             Posting {
-                account: vec!["account"],
+                account: Account("account"),
                 value_expression: "value string",
                 posting_type: PostingType::Actual
             }
@@ -150,7 +150,7 @@ fn virtual_posting() {
         Ok((
             "",
             Posting {
-                account: vec!["account"],
+                account: Account("account"),
                 value_expression: "value",
                 posting_type: PostingType::Virtual
             }
@@ -165,7 +165,7 @@ fn virtual_balanced() {
         Ok((
             "",
             Posting {
-                account: vec!["account"],
+                account: Account("account"),
                 value_expression: "value",
                 posting_type: PostingType::VirtualBalanced
             }
