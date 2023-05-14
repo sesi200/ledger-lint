@@ -51,3 +51,8 @@ fn normal_declaration() {
         ))
     );
 }
+
+#[test]
+fn indented_declaration() {
+    assert!(account_declaration("\taccount my:long:account\n  extra 1\n  extra 2").is_err())
+}

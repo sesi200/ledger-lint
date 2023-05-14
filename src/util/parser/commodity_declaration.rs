@@ -53,3 +53,8 @@ fn normal_declaration() {
         ))
     );
 }
+
+#[test]
+fn indented_declaration() {
+    assert!(commodity_declaration("  commodity myCommodity\n  extra 1\n  extra 2").is_err());
+}

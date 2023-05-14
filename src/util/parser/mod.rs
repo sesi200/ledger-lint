@@ -38,6 +38,7 @@ fn starts_with_content_test() {
     assert_eq!(starts_with_content("arst"), Ok(("arst", ())));
     assert_eq!(starts_with_content("# comment"), Ok(("# comment", ())));
     assert!(starts_with_content("\n").is_err());
+    assert!(starts_with_content("\t").is_err());
     assert!(starts_with_content(" ").is_err());
     assert!(starts_with_content("").is_err());
 }

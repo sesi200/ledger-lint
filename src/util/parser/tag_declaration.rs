@@ -48,3 +48,8 @@ fn normal_declaration() {
         ))
     );
 }
+
+#[test]
+fn indented_tag() {
+    assert!(tag_declaration("  tag Payee\n  extra 1\n  extra 2").is_err());
+}
