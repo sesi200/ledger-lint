@@ -9,9 +9,13 @@ pub mod transaction_header;
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::{complete::alphanumeric1, streaming::space0},
-    combinator::peek,
+    character::{
+        complete::{alphanumeric1, line_ending, space1},
+        streaming::space0,
+    },
+    combinator::{eof, not, peek},
     error::{context, VerboseError},
+    multi::many1,
     sequence::tuple,
     IResult,
 };
@@ -19,13 +23,17 @@ use nom::{
 pub type Res<'a, U> = IResult<&'a str, U, VerboseError<&'a str>>;
 
 pub fn starts_with_content(input: &str) -> Res<()> {
-    context("Starts with something", peek(alphanumeric1))(input)
-        .map(|(next_input, _)| (next_input, ()))
+    context(
+        "Starts with something",
+        peek(not(alt((space1, line_ending, eof)))),
+    )(input)
+    .map(|(next_input, _)| (next_input, ()))
 }
 
 #[test]
 fn starts_with_content_test() {
     assert_eq!(starts_with_content("arst"), Ok(("arst", ())));
+    assert_eq!(starts_with_content("# comment"), Ok(("# comment", ())));
     assert!(starts_with_content("\n").is_err());
     assert!(starts_with_content(" ").is_err());
     assert!(starts_with_content("").is_err());
