@@ -6,6 +6,7 @@ pub mod date;
 pub mod identifier;
 pub mod posting;
 pub mod tag;
+pub mod tag_declaration;
 pub mod transaction;
 pub mod transaction_header;
 
@@ -13,12 +14,11 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::{
-        complete::{alphanumeric1, line_ending, space1},
+        complete::{line_ending, space1},
         streaming::space0,
     },
     combinator::{eof, not, peek},
     error::{context, VerboseError},
-    multi::many1,
     sequence::tuple,
     IResult,
 };
