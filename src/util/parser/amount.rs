@@ -1,9 +1,10 @@
 use std::str::FromStr;
 
 use nom::{
+    branch::alt,
     bytes::complete::tag,
-    character::complete::digit1,
-    combinator::opt,
+    character::complete::{digit1, line_ending, space1},
+    combinator::{eof, opt, peek},
     error::{context, VerboseError, VerboseErrorKind},
     sequence::tuple,
 };
@@ -21,7 +22,14 @@ impl AsRef<Decimal> for Amount {
 }
 
 pub fn amount(input: &str) -> Res<Amount> {
-    let (leftover, _) = context("Amount", tuple((digit1, opt(tuple((tag("."), digit1))))))(input)?;
+    let (leftover, _) = context(
+        "Amount",
+        tuple((
+            digit1,
+            opt(tuple((tag("."), digit1))),
+            peek(alt((space1, line_ending, eof))),
+        )),
+    )(input)?;
 
     let amount_len = input.len() - leftover.len();
 
@@ -40,11 +48,15 @@ pub fn amount(input: &str) -> Res<Amount> {
 #[test]
 fn correct_input() {
     assert_eq!(amount("1"), Ok(("", Amount(1.into()))));
+    assert_eq!(amount("1 "), Ok((" ", Amount(1.into()))));
     assert_eq!(amount("1.1"), Ok(("", Amount(Decimal::new(11, 1)))));
+    assert_eq!(amount("1.1\n"), Ok(("\n", Amount(Decimal::new(11, 1)))));
     assert_eq!(amount("123.123"), Ok(("", Amount(Decimal::new(123123, 3)))));
 }
 
 #[test]
 fn partial_input() {
-    assert_eq!(amount("1."), Ok((".", Amount(Decimal::new(1, 0)))));
+    assert!(amount("1.").is_err());
+    assert!(amount("1$").is_err());
+    assert!(amount("$1").is_err());
 }
