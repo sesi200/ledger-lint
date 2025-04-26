@@ -1,4 +1,12 @@
-use nom::{error::VerboseError, IResult};
+use nom::{
+    branch::alt,
+    character::complete::{line_ending, not_line_ending},
+    combinator::eof,
+    error::{context, VerboseError},
+    multi::many0,
+    sequence::tuple,
+    IResult,
+};
 
 pub type Res<'a, U> = IResult<&'a str, U, VerboseError<&'a str>>;
 
@@ -32,24 +40,20 @@ impl std::fmt::Display for LedgerStatement<'_> {
 }
 
 pub fn ledgerfile(input: &str) -> Res<Ledgerfile> {
-    let parse_result = input
-        .lines()
-        .map(|line| statement(line))
-        .collect::<Result<Vec<_>, _>>()?
-        .into_iter()
-        .map(|tup| tup.1)
-        .collect();
-    Ok((
-        "",
-        Ledgerfile {
-            statements: parse_result,
-        },
-    ))
+    context("Ledgerfile", tuple((many0(statement), eof)))(input)
+        .map(|(next_input, (statements, _eof))| (next_input, Ledgerfile { statements }))
+}
+
+fn empty_line(input: &str) -> Res<LedgerStatement> {
+    context("Empty Line", line_ending)(input)
+        .map(|(next_input, _)| (next_input, LedgerStatement::EmptyLine))
+}
+
+fn line_with_content(input: &str) -> Res<LedgerStatement> {
+    context("Line with content", tuple((not_line_ending, line_ending)))(input)
+        .map(|(next_input, (line, _))| (next_input, LedgerStatement::Line(line)))
 }
 
 pub fn statement(input: &str) -> Res<LedgerStatement> {
-    Ok(match input {
-        "" => (input, LedgerStatement::EmptyLine),
-        content => ("", LedgerStatement::Line(content)),
-    })
+    context("Statement", alt((empty_line, line_with_content)))(input)
 }
