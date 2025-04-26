@@ -3,7 +3,10 @@ use nom::{
     sequence::tuple,
 };
 
-use super::parser::{rest_of_the_line, LedgerStatement, Res, INDENT};
+use super::{
+    parser::{LedgerStatement, Res, INDENT},
+    util::rest_of_the_line,
+};
 
 #[derive(Debug)]
 pub struct AccountDeclaration<'a> {
