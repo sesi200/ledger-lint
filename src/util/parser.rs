@@ -58,7 +58,7 @@ fn line_with_content(input: &str) -> Res<LedgerStatement> {
         .map(|(next_input, line)| (next_input, LedgerStatement::Line(line)))
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum LedgerStatement<'a> {
     AccountDeclaration(AccountDeclaration<'a>),
     Transaction(Transaction<'a>),

@@ -8,7 +8,7 @@ use super::{
     util::rest_of_the_line,
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct AccountDeclaration<'a> {
     pub account_name: &'a str,
     pub extras: Vec<&'a str>,
