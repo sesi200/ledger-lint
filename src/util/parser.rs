@@ -2,11 +2,11 @@ use nom::{
     branch::alt,
     character::complete::{line_ending, space0},
     combinator::eof,
-    error::{context, VerboseError},
+    error::context,
     multi::many0,
-    sequence::tuple,
-    IResult,
+    IResult, Parser,
 };
+use nom_language::error::VerboseError;
 
 use super::{
     account_declaration::{account_declaration, AccountDeclaration},
@@ -43,18 +43,21 @@ impl std::fmt::Display for LedgerStatement<'_> {
 }
 
 pub fn ledgerfile(input: &str) -> Res<Ledgerfile> {
-    context("Ledgerfile", tuple((many0(statement), eof)))(input)
+    context("Ledgerfile", (many0(statement), eof))
+        .parse(input)
         .map(|(next_input, (statements, _eof))| (next_input, Ledgerfile { statements }))
 }
 
 /// `\s*EOL`
 fn empty_line(input: &str) -> Res<LedgerStatement> {
-    context("Empty Line", tuple((space0, line_ending)))(input)
+    context("Empty Line", (space0, line_ending))
+        .parse(input)
         .map(|(next_input, (_spaces, _newline))| (next_input, LedgerStatement::EmptyLine))
 }
 
 fn line_with_content(input: &str) -> Res<LedgerStatement> {
-    context("Line with content", rest_of_the_line)(input)
+    context("Line with content", rest_of_the_line)
+        .parse(input)
         .map(|(next_input, line)| (next_input, LedgerStatement::Line(line)))
 }
 
@@ -75,5 +78,6 @@ pub fn statement(input: &str) -> Res<LedgerStatement> {
             empty_line,
             line_with_content,
         )),
-    )(input)
+    )
+    .parse(input)
 }

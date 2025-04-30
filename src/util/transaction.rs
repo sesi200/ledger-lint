@@ -2,11 +2,11 @@ use chrono::NaiveDate;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take},
-    character::complete::{line_ending, not_line_ending, space1},
+    character::complete::{anychar, line_ending, not_line_ending, space0, space1},
     combinator::opt,
     error::context,
     multi::{many0, many_till},
-    sequence::tuple,
+    Parser,
 };
 
 use super::{
@@ -14,7 +14,7 @@ use super::{
     util::{date, rest_of_the_line},
 };
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq)]
 pub struct Transaction<'a> {
     pub date: NaiveDate,
     pub description: &'a str,
@@ -49,7 +49,8 @@ impl std::fmt::Display for Transaction<'_> {
 
 /// Returns `(date, description)`
 fn main_row(input: &str) -> Res<(NaiveDate, &str)> {
-    context("Main row", tuple((date, space1, rest_of_the_line)))(input)
+    context("Main row", (date, space1, rest_of_the_line))
+        .parse(input)
         .map(|(next_input, (date, _separator, description))| (next_input, (date, description)))
 }
 
@@ -57,7 +58,8 @@ fn account_identifier(input: &str) -> Res<&str> {
     let (not_next_input, (_takes, delimiter)) = context(
         "Account identifier",
         many_till(take(1_u8), alt((tag("  "), tag("\t"), line_ending))),
-    )(input)?;
+    )
+    .parse(input)?;
     let identifier_len = input.len() - not_next_input.len() - delimiter.len();
 
     // don't want to skip delimiter - so need to split the string anew
@@ -65,60 +67,107 @@ fn account_identifier(input: &str) -> Res<&str> {
     Ok((next_input, identifier))
 }
 
+/// `next_input` starts with `eol` or `;`
+fn until_eol_or_comment(input: &str) -> Res<&str> {
+    let (_next_input, ((content, _end), _comment_start)) = context(
+        "until_eol_or_comment",
+        (
+            many_till(anychar, alt((line_ending, tag(" ;")))),
+            opt(tag(" ;")),
+        ),
+    )
+    .parse(input)?;
+
+    let content_len = content.len();
+    let (content, next_input) = input.split_at(content_len);
+    if next_input.chars().next() == Some(' ') {
+        Ok((&next_input[1..], content))
+    } else {
+        Ok((next_input, content))
+    }
+}
+
 fn balance_change(input: &str) -> Res<Option<&str>> {
-    context("Balance change", opt(tuple((space1, not_line_ending))))(input).map(
-        |(next_input, opt)| {
+    context("Balance change", opt((space1, until_eol_or_comment)))
+        .parse(input)
+        .map(|(next_input, opt)| {
             (
                 next_input,
                 opt.map(|(_delimiter, balance_change)| balance_change),
             )
-        },
-    )
+        })
 }
 
-#[derive(Debug, PartialEq, Eq)]
+fn comment(input: &str) -> Res<Option<&str>> {
+    context("Comment", opt((tag(";"), space0, not_line_ending)))
+        .parse(input)
+        .map(|(next_input, maybe_match)| {
+            (
+                next_input,
+                maybe_match.map(|(_start_tag, _spaces, content)| content),
+            )
+        })
+}
+
+#[derive(Debug, Default, PartialEq, Eq)]
 pub struct Posting<'a> {
     pub account: &'a str,
     pub balance_change: Option<&'a str>,
+    pub comment: Option<&'a str>,
 }
 
 impl Posting<'_> {
     fn pretty_print(&self, max_account_length: usize, max_balance_length: usize) -> String {
+        let mut output = format!("{INDENT}{account}", account = self.account);
         if let Some(balance_change) = self.balance_change {
-            let account_padding = " ".repeat(max_account_length - self.account.len());
+            // account.chars().count() gives actual number of chars
+            // account.len() counts umlauts as 2 chars
+            let account_padding = " ".repeat(max_account_length - self.account.chars().count());
             let balance_padding = " ".repeat(max_balance_length - balance_change.len());
-            format!(
-                "{INDENT}{account}{account_pad}{INDENT}{balance_pad}{balance}",
-                account = self.account,
-                balance = balance_change,
+            output.push_str(&format!(
+                "{account_pad}{INDENT}{balance_pad}{balance}",
                 account_pad = account_padding,
-                balance_pad = balance_padding
-            )
-        } else {
-            format!("{INDENT}{}", self.account)
+                balance_pad = balance_padding,
+                balance = balance_change,
+            ));
+        };
+        if let Some(comment) = self.comment {
+            output.push_str(&format!(" ; {comment}"));
         }
+        output
     }
 }
 
 fn posting(input: &str) -> Res<Posting> {
     context(
         "Extra",
-        tuple((space1, account_identifier, balance_change, line_ending)),
-    )(input)
-    .map(|(next_input, (_indent, account, balance_change, _eol))| {
         (
-            next_input,
-            Posting {
-                account,
-                balance_change,
-            },
-        )
-    })
+            space1,
+            account_identifier,
+            balance_change,
+            comment,
+            line_ending,
+        ),
+    )
+    .parse(input)
+    .map(
+        |(next_input, (_indent, account, balance_change, comment, _eol))| {
+            (
+                next_input,
+                Posting {
+                    account,
+                    balance_change,
+                    comment,
+                },
+            )
+        },
+    )
 }
 
 pub fn transaction(input: &str) -> Res<LedgerStatement> {
-    context("Account declaration", tuple((main_row, many0(posting))))(input).map(
-        |(next_input, ((date, description), postings))| {
+    context("Account declaration", (main_row, many0(posting)))
+        .parse(input)
+        .map(|(next_input, ((date, description), postings))| {
             (
                 next_input,
                 LedgerStatement::Transaction(Transaction {
@@ -127,12 +176,12 @@ pub fn transaction(input: &str) -> Res<LedgerStatement> {
                     postings,
                 }),
             )
-        },
-    )
+        })
 }
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
@@ -148,7 +197,8 @@ mod tests {
                 description: "description",
                 postings: vec![Posting {
                     account: "account",
-                    balance_change: Some("change")
+                    balance_change: Some("change"),
+                    comment: None,
                 }]
             })
         );
@@ -168,14 +218,92 @@ mod tests {
                 postings: vec![
                     Posting {
                         account: "; Payee: p",
-                        balance_change: None
+                        balance_change: None,
+                        comment: None,
                     },
                     Posting {
                         account: "account",
-                        balance_change: Some("change")
+                        balance_change: Some("change"),
+                        comment: None,
                     }
                 ]
             })
         );
+    }
+
+    #[test]
+    fn test_basic_transaction_with_posting_payee() {
+        let d = NaiveDate::parse_from_str("2024/01/01", "%Y/%m/%d").unwrap();
+
+        assert_eq!(
+            transaction("2024/01/01 description\n  account  change ; Payee: arst\n")
+                .unwrap()
+                .1,
+            LedgerStatement::Transaction(Transaction {
+                date: d,
+                description: "description",
+                postings: vec![Posting {
+                    account: "account",
+                    balance_change: Some("change"),
+                    comment: Some("Payee: arst")
+                }]
+            })
+        );
+    }
+
+    #[test]
+    fn test_complex_transactions() {
+        let d = NaiveDate::parse_from_str("2024/01/01", "%Y/%m/%d").unwrap();
+
+        assert_eq!(
+            transaction(
+                r#"2024/01/01 description
+                            ; Payee: p
+                            account          amount ; comment
+"#
+            )
+            .unwrap()
+            .1,
+            LedgerStatement::Transaction(Transaction {
+                date: d,
+                description: "description",
+                postings: vec![
+                    Posting {
+                        account: "; Payee: p",
+                        ..Default::default()
+                    },
+                    Posting {
+                        account: "account",
+                        balance_change: Some("amount"),
+                        comment: Some("comment")
+                    }
+                ]
+            })
+        );
+    }
+
+    #[test]
+    fn mytest() {
+        let t = transaction(
+            r#"2025/05/01 Monthly Budget
+                    ; Adjustments to previous month:
+                    ; - Mietzinserhöhung
+                    [Budget:3a]                                   605   CHF ; Assuming 7258 for 2026
+                    [Budget:Electronics]                           50   CHF ; Up to max of 1800 (~Laptop)
+                    [Budget:General]                              236   CHF ; balances the budget
+                    [Budget:Health]                                 0   CHF ; Up to max deductible + 1k dentist
+                    [Budget:Insurance:Health]                     590   CHF ; 470 KVG + 22 VVG per month
+                    [Budget:Insurance:Other]                       11   CHF ; 130 per year
+                    [Budget:Memberships:Alumni]                     5   CHF ; 60 per year
+                    [Budget:Memberships:Sauna]                    120   CHF ; 1400 per year
+                    [Budget:Memberships:Zürcher_Wanderwege]        7.5 CHF ; 90 per year
+                    [Budget:Memberships:Mieterverband]              8.5 CHF ; 100 per year
+                    [Budget:Rent]                                1322   CHF ; 1322 per month
+"#,
+        )
+        .unwrap()
+        .1;
+        println!("{:#?}", t);
+        println!("{t}");
     }
 }

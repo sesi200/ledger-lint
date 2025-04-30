@@ -3,23 +3,26 @@ use nom::{
     bytes::complete::tag,
     character::complete::{digit1, line_ending, not_line_ending},
     combinator::recognize,
-    error::{context, VerboseError, VerboseErrorKind},
-    sequence::tuple,
+    error::context,
+    Parser,
 };
+use nom_language::error::{VerboseError, VerboseErrorKind};
 
 use super::parser::Res;
 
 /// Until EOL
 pub fn rest_of_the_line(input: &str) -> Res<&str> {
-    context("Rest of the line", tuple((not_line_ending, line_ending)))(input)
+    context("Rest of the line", (not_line_ending, line_ending))
+        .parse(input)
         .map(|(next_input, (rest, _eol))| (next_input, rest))
 }
 
 pub fn date(input: &str) -> Res<NaiveDate> {
     context(
         "Date",
-        recognize(tuple((digit1, tag("/"), digit1, tag("/"), digit1))),
-    )(input)
+        recognize((digit1, tag("/"), digit1, tag("/"), digit1)),
+    )
+    .parse(input)
     .and_then(|(next_input, date_str)| {
         let result = NaiveDate::parse_from_str(date_str, "%Y/%m/%d").map_err(|err| {
             println!(

@@ -1,6 +1,5 @@
 use nom::{
-    bytes::complete::tag, character::complete::space1, error::context, multi::many0,
-    sequence::tuple,
+    bytes::complete::tag, character::complete::space1, error::context, multi::many0, Parser,
 };
 
 use super::{
@@ -25,18 +24,21 @@ impl std::fmt::Display for AccountDeclaration<'_> {
 }
 
 fn account_name(input: &str) -> Res<&str> {
-    context("Name", tuple((tag("account "), rest_of_the_line)))(input)
+    context("Name", (tag("account "), rest_of_the_line))
+        .parse(input)
         .map(|(next_input, (_tag, account_name))| (next_input, account_name))
 }
 
 fn extra(input: &str) -> Res<&str> {
-    context("Extra", tuple((space1, rest_of_the_line)))(input)
+    context("Extra", (space1, rest_of_the_line))
+        .parse(input)
         .map(|(next_input, (_indent, extra))| (next_input, extra))
 }
 
 pub fn account_declaration(input: &str) -> Res<LedgerStatement> {
-    context("Account declaration", tuple((account_name, many0(extra))))(input).map(
-        |(next_input, (account_name, extras))| {
+    context("Account declaration", (account_name, many0(extra)))
+        .parse(input)
+        .map(|(next_input, (account_name, extras))| {
             (
                 next_input,
                 LedgerStatement::AccountDeclaration(AccountDeclaration {
@@ -44,6 +46,5 @@ pub fn account_declaration(input: &str) -> Res<LedgerStatement> {
                     extras,
                 }),
             )
-        },
-    )
+        })
 }
