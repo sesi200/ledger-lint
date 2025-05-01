@@ -3,6 +3,7 @@ use clap::Parser;
 use regex::Regex;
 use std::fmt;
 use std::io::Result;
+use std::path::Path;
 
 /// Check infile for potential mistakes.
 #[derive(Parser, Debug)]
@@ -82,8 +83,8 @@ impl TransactionState {
     }
 }
 
-pub fn exec(file: &str, opts: &CheckOpts) -> Result<()> {
-    let file_content = std::fs::read_to_string(&file)?;
+pub fn exec(file: &Path, opts: &CheckOpts) -> Result<()> {
+    let file_content = std::fs::read_to_string(file)?;
     let findings = analyze(&file_content, opts);
 
     for finding in findings {
