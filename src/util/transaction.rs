@@ -9,10 +9,7 @@ use nom::{
     Parser,
 };
 
-use super::{
-    parser::{LedgerStatement, Res, INDENT},
-    util::{date, rest_of_the_line},
-};
+use super::parser::{date, rest_of_the_line, LedgerStatement, Res, INDENT};
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct Transaction<'a> {
@@ -80,8 +77,8 @@ fn until_eol_or_comment(input: &str) -> Res<&str> {
 
     let content_len = content.len();
     let (content, next_input) = input.split_at(content_len);
-    if next_input.chars().next() == Some(' ') {
-        Ok((&next_input[1..], content))
+    if let Some(stripped) = next_input.strip_prefix(' ') {
+        Ok((stripped, content))
     } else {
         Ok((next_input, content))
     }
@@ -280,30 +277,5 @@ mod tests {
                 ]
             })
         );
-    }
-
-    #[test]
-    fn mytest() {
-        let t = transaction(
-            r#"2025/05/01 Monthly Budget
-                    ; Adjustments to previous month:
-                    ; - Mietzinserhöhung
-                    [Budget:3a]                                   605   CHF ; Assuming 7258 for 2026
-                    [Budget:Electronics]                           50   CHF ; Up to max of 1800 (~Laptop)
-                    [Budget:General]                              236   CHF ; balances the budget
-                    [Budget:Health]                                 0   CHF ; Up to max deductible + 1k dentist
-                    [Budget:Insurance:Health]                     590   CHF ; 470 KVG + 22 VVG per month
-                    [Budget:Insurance:Other]                       11   CHF ; 130 per year
-                    [Budget:Memberships:Alumni]                     5   CHF ; 60 per year
-                    [Budget:Memberships:Sauna]                    120   CHF ; 1400 per year
-                    [Budget:Memberships:Zürcher_Wanderwege]        7.5 CHF ; 90 per year
-                    [Budget:Memberships:Mieterverband]              8.5 CHF ; 100 per year
-                    [Budget:Rent]                                1322   CHF ; 1322 per month
-"#,
-        )
-        .unwrap()
-        .1;
-        println!("{:#?}", t);
-        println!("{t}");
     }
 }

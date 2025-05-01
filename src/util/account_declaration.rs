@@ -2,10 +2,7 @@ use nom::{
     bytes::complete::tag, character::complete::space1, error::context, multi::many0, Parser,
 };
 
-use super::{
-    parser::{LedgerStatement, Res, INDENT},
-    util::rest_of_the_line,
-};
+use super::parser::{rest_of_the_line, LedgerStatement, Res, INDENT};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct AccountDeclaration<'a> {
