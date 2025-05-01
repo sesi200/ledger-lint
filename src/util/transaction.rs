@@ -51,6 +51,7 @@ fn main_row(input: &str) -> Res<(NaiveDate, &str)> {
         .map(|(next_input, (date, _separator, description))| (next_input, (date, description)))
 }
 
+/// Account identifier is an arbitrary string. Terminates as the first '  ' or `\t` that occurs.
 fn account_identifier(input: &str) -> Res<&str> {
     let (not_next_input, (_takes, delimiter)) = context(
         "Account identifier",
@@ -137,7 +138,7 @@ impl Posting<'_> {
 
 fn posting(input: &str) -> Res<Posting> {
     context(
-        "Extra",
+        "Posting",
         (
             space1,
             account_identifier,
@@ -162,7 +163,7 @@ fn posting(input: &str) -> Res<Posting> {
 }
 
 pub fn transaction(input: &str) -> Res<LedgerStatement> {
-    context("Account declaration", (main_row, many0(posting)))
+    context("Transaction", (main_row, many0(posting)))
         .parse(input)
         .map(|(next_input, ((date, description), postings))| {
             (

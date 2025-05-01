@@ -83,7 +83,7 @@ pub fn statement(input: &str) -> Res<LedgerStatement> {
     .parse(input)
 }
 
-/// Until EOL
+/// Until EOL. Consumes EOL
 pub fn rest_of_the_line(input: &str) -> Res<&str> {
     context("Rest of the line", (not_line_ending, line_ending))
         .parse(input)
@@ -97,17 +97,11 @@ pub fn date(input: &str) -> Res<NaiveDate> {
     )
     .parse(input)
     .and_then(|(next_input, date_str)| {
-        let result = NaiveDate::parse_from_str(date_str, "%Y/%m/%d").map_err(|err| {
-            println!(
-                "failed to parse {}, error is {}, leftover is {}",
-                date_str, err, next_input
-            );
-            VerboseError {
-                errors: vec![(
-                    "Date invalid - expected format YYYY/MM/DD",
-                    VerboseErrorKind::Context("date"),
-                )],
-            }
+        let result = NaiveDate::parse_from_str(date_str, "%Y/%m/%d").map_err(|_| VerboseError {
+            errors: vec![(
+                "Date invalid - expected format YYYY/MM/DD",
+                VerboseErrorKind::Context("date"),
+            )],
         });
         match result {
             Ok(date) => Ok((next_input, date)),

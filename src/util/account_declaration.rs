@@ -45,3 +45,21 @@ pub fn account_declaration(input: &str) -> Res<LedgerStatement> {
             )
         })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_account_declaration() {
+        assert_eq!(
+            account_declaration("account My Account\n  note 1\n  note 2\n")
+                .unwrap()
+                .1,
+            LedgerStatement::AccountDeclaration(AccountDeclaration {
+                account_name: "My Account",
+                extras: vec!["note 1", "note 2"]
+            })
+        );
+    }
+}
